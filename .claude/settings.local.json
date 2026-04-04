@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python src/generator.py)",
+      "Bash(pip install:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

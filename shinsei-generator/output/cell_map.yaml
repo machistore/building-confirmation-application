@@ -1,0 +1,80 @@
+# cell_map.yaml - Excelセルマッピング定義
+#
+# セクション説明:
+#   sheet      : 書き込み先シート名
+#   fields     : YAMLデータのキー（ドット区切りで階層指定）→ セルアドレスのマッピング
+#   calculated : generator.py で計算した値 → セルアドレスのマッピング
+#   floors     : 各階の繰り返しデータの書き込み設定
+#
+# key の記法:
+#   "建築主.氏名"  → data["建築主"]["氏名"]
+#   "敷地.敷地面積" → data["敷地"]["敷地面積"]
+#   "建築面積"     → data["建築面積"]  （トップレベル）
+
+sheet: "確認申請書"
+
+# ---- 入力データの書き込み ----
+fields:
+  - key: "meta.案件番号"
+    cell: "C3"
+    label: "案件番号"
+
+  - key: "meta.担当者"
+    cell: "C4"
+    label: "担当者"
+
+  - key: "建築主.フリガナ"
+    cell: "C7"
+    label: "建築主フリガナ"
+
+  - key: "建築主.氏名"
+    cell: "C8"
+    label: "建築主氏名"
+
+  - key: "建築主.郵便番号"
+    cell: "C9"
+    label: "郵便番号"
+
+  - key: "建築主.住所"
+    cell: "C10"
+    label: "住所"
+
+  - key: "敷地.敷地面積"
+    cell: "C14"
+    label: "敷地面積（㎡）"
+
+  - key: "敷地.指定建蔽率"
+    cell: "C15"
+    label: "指定建蔽率（%）"
+
+  - key: "敷地.指定容積率"
+    cell: "C16"
+    label: "指定容積率（%）"
+
+  - key: "建築面積"
+    cell: "C20"
+    label: "建築面積（㎡）"
+
+# ---- 計算値の書き込み ----
+# key は generator.py が渡す計算結果辞書のキーと一致させること
+calculated:
+  - key: "延べ床面積"
+    cell: "C21"
+    label: "延べ床面積（㎡）"
+
+  - key: "建蔽率"
+    cell: "C22"
+    label: "建蔽率（%）"
+
+  - key: "容積率"
+    cell: "C23"
+    label: "容積率（%）"
+
+# ---- 各階データの繰り返し書き込み ----
+# start_row : 1階目を書き込む行番号
+# 階_col    : 「階」（例: "1階"）を書くカラム記号
+# 床面積_col: 床面積（㎡）を書くカラム記号
+floors:
+  start_row: 26
+  階_col: "B"
+  床面積_col: "C"
