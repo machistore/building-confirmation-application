@@ -14,6 +14,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import yaml
 import openpyxl
+import xlrd
+import xlwt
+from xlutils.copy import copy as xl_copy
 from calculator import calc_total_floor_area, calc_kenpei_ratio, calc_yoseki_ratio
 from validator import validate
 
@@ -81,7 +84,10 @@ def write_excel(
     cell_map_path: Path,
     output_path: Path,
 ) -> None:
-    """cell_map.yaml に従ってデータを Excel に書き込む。
+    """cell_map.yaml に従ってデータを確認用 xlsx に書き込む（1シート・フラット構成）。
+
+    cell_map の各エントリを読み、source/key に従って値を取得し
+    openpyxl の ws.cell(row, column) で書き込む（row/col ともに 0始まり→1始まりに変換）。
 
     Args:
         data: YAMLから読み込んだ入力データ
@@ -90,36 +96,107 @@ def write_excel(
         output_path: 出力先 .xlsx のパス
     """
     cell_map = load_yaml(cell_map_path)
-    sheet_name = cell_map.get("sheet", "Sheet1")
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = sheet_name
+    ws.title = "確認申請書"
 
-    # --- 入力データの書き込み ---
-    for entry in cell_map.get("fields", []):
-        value = _resolve_key(data, entry["key"])
-        if value is not None:
-            ws[entry["cell"]] = value
+    floors_cfg = None
 
-    # --- 計算値の書き込み ---
-    for entry in cell_map.get("calculated", []):
-        value = calc_values.get(entry["key"])
-        if value is not None:
-            ws[entry["cell"]] = value
+    for entry_name, entry in cell_map.items():
+        if not isinstance(entry, dict):
+            continue
+        if entry_name == "floors":
+            floors_cfg = entry
+            continue
+        if "row" not in entry or "col" not in entry:
+            continue
 
-    # --- 各階の繰り返し書き込み ---
-    floors_cfg = cell_map.get("floors", {})
-    start_row = floors_cfg.get("start_row", 26)
-    kai_col = floors_cfg.get("階_col", "B")
-    area_col = floors_cfg.get("床面積_col", "C")
+        source = entry.get("source")
+        key = entry.get("key", "")
+        if source == "data":
+            value = _resolve_key(data, key)
+        elif source == "calc":
+            value = calc_values.get(key)
+        else:
+            continue
 
-    for i, floor in enumerate(data.get("各階", [])):
-        row = start_row + i
-        ws[f"{kai_col}{row}"] = floor.get("階")
-        ws[f"{area_col}{row}"] = floor.get("床面積")
+        if value is None:
+            continue
+
+        # cell_map は 0始まり → openpyxl は 1始まり
+        ws.cell(row=entry["row"] + 1, column=entry["col"] + 1, value=value)
+
+    # 階別床面積の繰り返し書き込み
+    if floors_cfg:
+        start_row = floors_cfg["start_row"]  # 0始まり
+        kai_col = floors_cfg["階_col"]        # 0始まり
+        area_col = floors_cfg["床面積_col"]   # 0始まり
+        for i, floor in enumerate(data.get("各階", [])):
+            row = start_row + i
+            ws.cell(row=row + 1, column=kai_col + 1, value=floor.get("階"))
+            ws.cell(row=row + 1, column=area_col + 1, value=floor.get("床面積"))
 
     wb.save(output_path)
+
+
+def write_to_template(
+    data: dict,
+    calc_values: dict,
+    template_path: Path,
+    cell_map_path: Path,
+    output_path: Path,
+) -> None:
+    """テンプレート XLS に cell_map.yaml の座標へ値を書き込んで保存する。
+
+    Args:
+        data: YAMLから読み込んだ入力データ
+        calc_values: 計算済み値の辞書（延べ床面積・建蔽率・容積率）
+        template_path: 元テンプレート .xls のパス
+        cell_map_path: cell_map.yaml のパス
+        output_path: 出力先 .xls のパス
+    """
+    cell_map = load_yaml(cell_map_path)
+
+    rb = xlrd.open_workbook(str(template_path), formatting_info=True)
+    wb = xl_copy(rb)
+
+    floors_cfg = cell_map.pop("floors", None)
+
+    for entry_name, entry in cell_map.items():
+        if not isinstance(entry, dict):
+            continue
+        if "sheet_idx" not in entry or "row" not in entry or "col" not in entry:
+            continue
+
+        # 書き込む値を決定
+        source = entry.get("source")
+        key = entry.get("key", "")
+        if source == "data":
+            value = _resolve_key(data, key)
+        elif source == "calc":
+            value = calc_values.get(key)
+        else:
+            continue
+
+        if value is None:
+            continue
+
+        ws = wb.get_sheet(entry["sheet_idx"])
+        ws.write(entry["row"], entry["col"], value)
+
+    # 階別床面積の繰り返し書き込み
+    if floors_cfg and isinstance(floors_cfg, dict):
+        ws = wb.get_sheet(floors_cfg["sheet_idx"])
+        start_row = floors_cfg["start_row"]
+        kai_col = floors_cfg["階_col"]
+        area_col = floors_cfg["床面積_col"]
+        for i, floor in enumerate(data.get("各階", [])):
+            row = start_row + i
+            ws.write(row, kai_col, floor.get("階", ""))
+            ws.write(row, area_col, floor.get("床面積", ""))
+
+    wb.save(str(output_path))
 
 
 def main():
@@ -171,7 +248,7 @@ def main():
     txt_path.write_text(result_text, encoding="utf-8")
     print(f"\n結果を保存しました: {txt_path}")
 
-    # Excel 出力
+    # result.xlsx 出力（旧フォーマット・確認用）
     cell_map_path = output_dir / "cell_map.yaml"
     xlsx_path = output_dir / "result.xlsx"
     write_excel(
@@ -185,6 +262,22 @@ def main():
         output_path=xlsx_path,
     )
     print(f"Excelを保存しました: {xlsx_path}")
+
+    # テンプレート XLS への書き込み
+    template_path = base_dir / "templates" / "BPR003_260323.xls"
+    xls_path = output_dir / "申請書_出力.xls"
+    write_to_template(
+        data=data,
+        calc_values={
+            "延べ床面積": total_floor_area,
+            "建蔽率": kenpei,
+            "容積率": yoseki,
+        },
+        template_path=template_path,
+        cell_map_path=cell_map_path,
+        output_path=xls_path,
+    )
+    print(f"申請書テンプレートを保存しました: {xls_path}")
 
 
 if __name__ == "__main__":
