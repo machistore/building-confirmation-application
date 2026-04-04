@@ -14,45 +14,45 @@
 建築主_フリガナ:
   sheet: "第二面"
   sheet_idx: 1
-  row: 4        # E5（B5=【イ．  C5=氏名のフリガナ  D5=】）
-  col: 4
-  note: "E5セル"
+  row: 4        # F5（B5=【イ．  C5=氏名のフリガナ  D5=】）
+  col: 5
+  note: "F5セル"
   source: data
   key: "建築主.フリガナ"
 
 建築主_氏名:
   sheet: "第二面"
   sheet_idx: 1
-  row: 5        # E6（B6=【ロ．  C6=氏名  D6=】）
-  col: 4
-  note: "E6セル"
+  row: 5        # F6（B6=【ロ．  C6=氏名  D6=】）
+  col: 5
+  note: "F6セル"
   source: data
   key: "建築主.氏名"
 
 建築主_郵便番号:
   sheet: "第二面"
   sheet_idx: 1
-  row: 6        # E7（B7=【ハ．  C7=郵便番号  D7=】）
-  col: 4
-  note: "E7セル"
+  row: 6        # F7（B7=【ハ．  C7=郵便番号  D7=】）
+  col: 5
+  note: "F7セル"
   source: data
   key: "建築主.郵便番号"
 
 建築主_住所:
   sheet: "第二面"
   sheet_idx: 1
-  row: 7        # E8（B8=【ニ．  C8=住所  D8=】）
-  col: 4
-  note: "E8セル"
+  row: 7        # F8（B8=【ニ．  C8=住所  D8=】）
+  col: 5
+  note: "F8セル"
   source: data
   key: "建築主.住所"
 
 建築主_電話番号:
   sheet: "第二面"
   sheet_idx: 1
-  row: 8        # E9（B9=【ホ．  C9=電話番号  D9=】）
-  col: 4
-  note: "E9セル"
+  row: 8        # F9（B9=【ホ．  C9=電話番号  D9=】）
+  col: 5
+  note: "F9セル"
   source: data
   key: "建築主.電話番号"
 
@@ -63,27 +63,27 @@
 敷地_地名地番:
   sheet: "第三面"
   sheet_idx: 2
-  row: 2        # B3（A3=【１．地名地番】→右隣が入力欄）
-  col: 1
-  note: "B3セル"
+  row: 2        # E3（A3=【１．地名地番】）
+  col: 4
+  note: "E3セル"
   source: data
   key: "敷地.地名地番"
 
 敷地_住居表示:
   sheet: "第三面"
   sheet_idx: 2
-  row: 3        # B4（A4=【２．住居表示】→右隣が入力欄）
-  col: 1
-  note: "B4セル"
+  row: 3        # E4（A4=【２．住居表示】）
+  col: 4
+  note: "E4セル"
   source: data
   key: "敷地.住居表示"
 
 敷地_敷地面積合計:
   sheet: "第三面"
   sheet_idx: 2
-  row: 21       # F22（B22=【ホ．  C22=敷地面積の合計  D22=】  E22=（１））
-  col: 5
-  note: "F22セル（敷地面積の合計）"
+  row: 21       # G22（B22=【ホ．  C22=敷地面積の合計  D22=】  E22=（１））
+  col: 6
+  note: "G22セル（敷地面積の合計）"
   source: data
   key: "敷地.敷地面積"
 
@@ -99,27 +99,27 @@
 延べ床面積_合計:
   sheet: "第三面"
   sheet_idx: 2
-  row: 48       # E49（B49=【ヨ．  C49=延べ面積  D49=】）
-  col: 4
-  note: "E49セル（【１１．延べ面積】ヨ．延べ面積）"
+  row: 48       # I49（B49=【ヨ．  C49=延べ面積  D49=】）
+  col: 8
+  note: "I49セル（【１１．延べ面積】ヨ．延べ面積）"
   source: calc
   key: "延べ床面積"
 
 建蔽率:
   sheet: "第三面"
   sheet_idx: 2
-  row: 32       # E33（B33=【ハ．  C33=建蔽率  D33=】）
-  col: 4
-  note: "E33セル"
+  row: 32       # I33（B33=【ハ．  C33=建蔽率  D33=】）
+  col: 8
+  note: "I33セル"
   source: calc
   key: "建蔽率"
 
 容積率:
   sheet: "第三面"
   sheet_idx: 2
-  row: 49       # E50（B50=【タ．  C50=容積率  D50=】）
-  col: 4
-  note: "E50セル"
+  row: 49       # I50（B50=【タ．  C50=容積率  D50=】）
+  col: 8
+  note: "I50セル"
   source: calc
   key: "容積率"
 
@@ -135,5 +135,97 @@ floors:
   sheet_idx: 3
   start_row: 53   # 0-based（row 54 = 1階目）
   階_col: 5       # F列（E54=（  H54=階）の間）
-  床面積_col: 9   # J列（I54=（  N54=）の申請部分先頭）
-  note: "第四面【１２．床面積】イ．階別（F54/J54から1行ずつ）"
+  床面積_col: 10  # K列（申請部分先頭を1列右に修正）
+  note: "第四面【１２．床面積】イ．階別（F54/K54から1行ずつ）"
+
+# ============================================================
+# 第五面: 建築物の階別概要（同一シート内 2ブロック構成）
+# ============================================================
+# ブロック1: A3(row=2)始まり、ブロック2: A27(row=26)始まり
+# block_stride=24 行ごとにブロックが繰り返される
+# fields の各エントリ:
+#   row_offset … ブロック先頭行からの相対行数（0始まり）
+#   col        … 0始まり列番号
+#   key        … data["階別概要"][n] の辞書キー（省略時はフィールド名と同じ）
+#   type       … "checkbox_true"  → 値が真のとき "■"、偽のとき "□"
+#                "checkbox_false" → 値が偽のとき "■"、真のとき "□"
+
+floor_blocks_第五面:
+  sheet: "第五面"
+  sheet_idx: 4
+  data_key: "階別概要"
+  start_row: 2      # 0-based: A3(1-based) = ブロック1の番号行
+  block_stride: 24  # ブロック2は row=26(0-based) = A27(1-based) から開始
+  fields:
+    建築物番号:
+      row_offset: 0
+      col: 1          # B列
+    階:
+      row_offset: 1
+      col: 1
+    柱の小径:
+      row_offset: 2
+      col: 1
+    横架材間垂直距離:
+      row_offset: 3
+      col: 1
+    階高:
+      row_offset: 4
+      col: 1
+    天井高_居室:
+      row_offset: 6
+      col: 3          # D列（C9=「【イ．居室の天井の高さ】」の右）
+    特定天井_有チェック:
+      row_offset: 7
+      col: 14         # O列（O10=□有）
+      type: checkbox_true
+      key: "特定天井"
+    特定天井_無チェック:
+      row_offset: 7
+      col: 16         # Q列（Q10=□無）
+      type: checkbox_false
+      key: "特定天井"
+    用途区分コード:
+      row_offset: 10
+      col: 4          # E列（D13=（, K13=）の内側先頭）
+    具体的用途:
+      row_offset: 10
+      col: 12         # M列（L13=（, S13=）の内側先頭）
+    床面積:
+      row_offset: 10
+      col: 21         # V列（T13=（, Z13=）の内側先頭）
+
+# ============================================================
+# 第六面: 建築物独立部分別概要
+# ============================================================
+# 現在は1件のみ対応（建築物独立部分リストの先頭要素を書き込む）
+# 構造: B9=【ニ．構造】, L9=造 → C9(col=2)に材料部分のみ書く
+#       YAML値が "木造" の場合、末尾の "造" を除去して "木" を書き込む
+
+独立部分_第六面:
+  sheet: "第六面"
+  sheet_idx: 5
+  data_key: "建築物独立部分"
+  fields:
+    番号:
+      row: 2
+      col: 1          # B3（A3=【１．番号】）
+    延べ面積:
+      row: 3
+      col: 1          # B4（A4=【２．延べ面積】）
+    最高の高さ:
+      row: 5
+      col: 4          # E6（B6=【イ．最高の高さ】）
+    最高の軒の高さ:
+      row: 6
+      col: 4          # E7（B7=【ロ．最高の軒の高さ】）
+    階数_地上:
+      row: 7
+      col: 8          # I8（H8=（, L8=）の内側先頭）
+    階数_地下:
+      row: 7
+      col: 15         # P8（O8=（, S8=）の内側先頭）
+    構造:
+      row: 8
+      col: 7          # H9（B9=【ニ．構造】, L9=造 → 材料名のみ書く）
+      transform: strip_zou

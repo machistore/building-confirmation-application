@@ -18,6 +18,7 @@ import xlrd
 import xlwt
 from xlutils.copy import copy as xl_copy
 from calculator import calc_total_floor_area, calc_kenpei_ratio, calc_yoseki_ratio
+from pdf_converter import convert_to_pdf
 from validator import validate
 
 
@@ -162,6 +163,8 @@ def write_to_template(
     wb = xl_copy(rb)
 
     floors_cfg = cell_map.pop("floors", None)
+    floor_blocks_cfg = cell_map.pop("floor_blocks_第五面", None)
+    dokuritsu_cfg = cell_map.pop("独立部分_第六面", None)
 
     for entry_name, entry in cell_map.items():
         if not isinstance(entry, dict):
@@ -185,7 +188,7 @@ def write_to_template(
         ws = wb.get_sheet(entry["sheet_idx"])
         ws.write(entry["row"], entry["col"], value)
 
-    # 階別床面積の繰り返し書き込み
+    # 第四面: 階別床面積の繰り返し書き込み
     if floors_cfg and isinstance(floors_cfg, dict):
         ws = wb.get_sheet(floors_cfg["sheet_idx"])
         start_row = floors_cfg["start_row"]
@@ -196,7 +199,71 @@ def write_to_template(
             ws.write(row, kai_col, floor.get("階", ""))
             ws.write(row, area_col, floor.get("床面積", ""))
 
+    # 第五面: 建築物の階別概要（ブロック繰り返し）
+    if floor_blocks_cfg and isinstance(floor_blocks_cfg, dict):
+        _write_floor_blocks(wb, floor_blocks_cfg, data.get("階別概要", []))
+
+    # 第六面: 建築物独立部分別概要
+    if dokuritsu_cfg and isinstance(dokuritsu_cfg, dict):
+        _write_independent_parts(wb, dokuritsu_cfg, data.get("建築物独立部分", []))
+
     wb.save(str(output_path))
+
+
+def _write_floor_blocks(wb, cfg: dict, data_list: list) -> None:
+    """第五面: ブロック構造への階別データ書き込み。
+
+    各ブロックは start_row + block_idx * block_stride 行から始まる。
+    fields 内の各エントリで row_offset / col / key / type を参照して書き込む。
+    type が "checkbox_true"  → 値が真のとき "■"、偽のとき "□"
+    type が "checkbox_false" → 値が偽のとき "■"、真のとき "□"
+    """
+    ws = wb.get_sheet(cfg["sheet_idx"])
+    start_row = cfg["start_row"]
+    block_stride = cfg["block_stride"]
+    fields = cfg.get("fields", {})
+
+    for block_idx, floor_data in enumerate(data_list):
+        block_start = start_row + block_idx * block_stride
+        for field_name, field_cfg in fields.items():
+            row = block_start + field_cfg["row_offset"]
+            col = field_cfg["col"]
+            key = field_cfg.get("key", field_name)
+            value = floor_data.get(key)
+            field_type = field_cfg.get("type", "value")
+
+            if field_type == "checkbox_true":
+                ws.write(row, col, "■" if value else "□")
+            elif field_type == "checkbox_false":
+                ws.write(row, col, "■" if not value else "□")
+            elif value is not None:
+                ws.write(row, col, value)
+
+
+def _write_independent_parts(wb, cfg: dict, data_list: list) -> None:
+    """第六面: 建築物独立部分の書き込み（現在は先頭1件のみ対応）。
+
+    構造フィールドに transform: strip_zou が指定された場合、
+    末尾の「造」を除去して書き込む（テンプレートの L9=造 と重複回避）。
+    """
+    if not data_list:
+        return
+
+    ws = wb.get_sheet(cfg["sheet_idx"])
+    part_data = data_list[0]
+    fields = cfg.get("fields", {})
+
+    for field_name, field_cfg in fields.items():
+        row = field_cfg["row"]
+        col = field_cfg["col"]
+        value = part_data.get(field_name)
+        if value is None:
+            continue
+
+        if field_cfg.get("transform") == "strip_zou" and isinstance(value, str):
+            value = value.removesuffix("造")
+
+        ws.write(row, col, value)
 
 
 def main():
@@ -278,6 +345,19 @@ def main():
         output_path=xls_path,
     )
     print(f"申請書テンプレートを保存しました: {xls_path}")
+
+    # XLS → PDF 変換
+    try:
+        import time
+        t0 = time.time()
+        pdf_path = convert_to_pdf(str(xls_path))
+        elapsed = time.time() - t0
+        pdf_size = Path(pdf_path).stat().st_size
+        print(f"PDF出力完了: {pdf_path}")
+        print(f"  ファイルサイズ: {pdf_size:,} bytes ({pdf_size / 1024:.1f} KB)")
+        print(f"  変換時間: {elapsed:.1f} 秒")
+    except Exception as e:
+        print(f"PDF変換失敗（XLSはそのまま保存済み）: {e}")
 
 
 if __name__ == "__main__":
