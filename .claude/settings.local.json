@@ -3,7 +3,8 @@
     "allow": [
       "Bash(python src/generator.py)",
       "Bash(pip install:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(ls -la C:/Users/machi/Documents/works/machistore/repos/building-confirmation-application/shinsei-generator/output/2026-TEST*)"
     ]
   }
 }

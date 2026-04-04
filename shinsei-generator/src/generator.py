@@ -266,13 +266,33 @@ def _write_independent_parts(wb, cfg: dict, data_list: list) -> None:
         ws.write(row, col, value)
 
 
+def _resolve_input_path(base_dir: Path, arg: str) -> tuple[Path, str]:
+    """引数からYAMLパスと案件番号を決定する。
+
+    - 引数なし          → input/sample_project.yaml、案件番号は "sample"
+    - 拡張子なし文字列  → 案件番号として扱い input/{arg}.yaml を使用
+    - パス文字列        → そのままパスとして扱い、ステム部分を案件番号とする
+    """
+    arg_path = Path(arg)
+    if arg_path.suffix:
+        # 拡張子あり → ファイルパス
+        yaml_path = arg_path if arg_path.is_absolute() else base_dir / arg_path
+        case_no = yaml_path.stem
+    else:
+        # 拡張子なし → 案件番号
+        case_no = arg
+        yaml_path = base_dir / "input" / f"{case_no}.yaml"
+    return yaml_path, case_no
+
+
 def main():
     # 入力ファイルパスの決定
     base_dir = Path(__file__).parent.parent
     if len(sys.argv) >= 2:
-        input_path = sys.argv[1]
+        input_path, case_no = _resolve_input_path(base_dir, sys.argv[1])
     else:
         input_path = base_dir / "input" / "sample_project.yaml"
+        case_no = "sample"
 
     print(f"入力ファイル: {input_path}")
 
@@ -310,14 +330,17 @@ def main():
     output_dir = base_dir / "output"
     output_dir.mkdir(exist_ok=True)
 
+    # ファイル名プレフィックス（案件番号付き）
+    prefix = f"{case_no}_" if case_no != "sample" else ""
+
     # テキスト出力
-    txt_path = output_dir / "result.txt"
+    txt_path = output_dir / f"{prefix}result.txt"
     txt_path.write_text(result_text, encoding="utf-8")
     print(f"\n結果を保存しました: {txt_path}")
 
     # result.xlsx 出力（旧フォーマット・確認用）
     cell_map_path = output_dir / "cell_map.yaml"
-    xlsx_path = output_dir / "result.xlsx"
+    xlsx_path = output_dir / f"{prefix}result.xlsx"
     write_excel(
         data=data,
         calc_values={
@@ -332,7 +355,7 @@ def main():
 
     # テンプレート XLS への書き込み
     template_path = base_dir / "templates" / "BPR003_260323.xls"
-    xls_path = output_dir / "申請書_出力.xls"
+    xls_path = output_dir / f"{prefix}申請書.xls"
     write_to_template(
         data=data,
         calc_values={
