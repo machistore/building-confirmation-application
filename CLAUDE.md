@@ -37,15 +37,29 @@ shinsei-generator/
 
 ## 技術スタック
 - Python 3.x
-- 外部ライブラリ：openpyxl（Excel出力）
-- 入力フォーマット：YAML（PyYAML使用）
+- pyyaml：入力YAML読み込み
+- xlrd / xlwt / xlutils：XLSテンプレートへの書き込み
+- openpyxl：確認用 result.xlsx の生成
+- pywin32（win32com）：ExcelからPDFへの変換
 
 ## 禁止事項
 - 個人情報（建築主氏名・住所・電話番号）のログ出力禁止
 - output/ ディレクトリ以外への生成ファイル出力禁止
 - templates/ 内のExcelテンプレートを直接編集しないこと（コピーして使用）
 
-## 開発方針
-1. まずテキスト出力（output/result.txt）で計算値を確認する
-2. 確認後にExcel出力（openpyxl）へ移行する
-3. バリデーションエラーは日本語でわかりやすく表示する
+## 現在の作業状況
+
+### 最終更新: 2026-04-06
+
+### 完了済み
+- XLSテンプレートへの全面書き込み（第二面〜第六面）
+- PDF変換（win32com）
+- `new_project.py`：CLI対話入力 → YAML生成 → 申請書生成の一連フロー
+- `generator.py`：案件番号引数対応・出力ファイル名への案件番号付加
+
+### 次回の取り掛かりポイント
+- cell_map.yaml に未マッピング項目を追加（設計者・建物情報・工事日程など）
+- new_project.py の Windows コンソール文字コード問題への対処
+- validator.py の拡張（設計者必須項目チェック）
+
+詳細は `shinsei-generator/CLAUDE.md` を参照。
